@@ -191,6 +191,80 @@ Each worklet's source is a separate export — bundlers that support `sideEffect
 
 ---
 
+## Animating CSS custom properties
+
+All numeric options map to CSS custom properties you can animate with `@keyframes` or the Web Animations API. The worklet re-paints on every frame automatically.
+
+```css
+@keyframes blob-pulse {
+  0%   { --paint-blob-threshold: 1.0; --paint-blob-radius: 0.3; }
+  50%  { --paint-blob-threshold: 1.5; --paint-blob-radius: 0.45; }
+  100% { --paint-blob-threshold: 1.0; --paint-blob-radius: 0.3; }
+}
+
+.hero {
+  animation: blob-pulse 4s ease-in-out infinite;
+}
+```
+
+> Custom property animation requires Chrome 65+ or the polyfill — properties must be registered with `CSS.registerProperty` first (the worklet does this via `inputProperties`).
+
+---
+
+## Performance notes
+
+- All painting runs in a **Worklet thread**, off the main thread, with direct access to a `CanvasRenderingContext2D`.
+- Worklet code is inlined as a Blob URL — no extra HTTP request.
+- Each worklet is registered once per page load regardless of how many components use the same effect.
+- Pixel-level operations (`noise`, `liquid-blob`) are intentionally limited to small surfaces; for full-viewport use, consider a lower `scale` or a downscaled canvas trick.
+
+---
+
+## Troubleshooting
+
+| Symptom | Likely cause |
+|---|---|
+| White / blank element | Worklet registered but `isReady` not yet `true` — add a background fallback |
+| `CSS.paintWorklet not available` in console | Polyfill failed to load (CSP or network) |
+| Colors look wrong | Color values must be 6-digit hex strings (e.g. `#ff0000`) |
+| SSR hydration mismatch | Normal — hook returns empty style on server, applies on client after `useEffect` |
+
+---
+
+## Contributing
+
+```bash
+git clone https://github.com/dpawlikowski/css-paint-worklet-kit
+cd css-paint-worklet-kit
+npm install --legacy-peer-deps
+
+npm run dev        # demo at http://localhost:5173
+npm test           # run test suite
+npm run type-check # TypeScript strict check
+npm run lint       # ESLint
+npm run build      # build dist/
+```
+
+Adding a new worklet:
+1. Create `src/worklets/<name>.ts` — default export is a JS string with `registerPaint('<name>', ...)`.
+2. Add the name to `WorkletName` in `src/hook/types.ts` and the options interface.
+3. Import and add to `workletSources` in `src/hook/registry.ts`.
+4. Add a demo panel in `demo/src/Gallery.tsx`.
+
+---
+
+## Changelog
+
+### 0.1.0 — 2025-07-01
+
+- Initial release: `noise`, `confetti`, `gradient`, `glitch`, `liquid-blob` worklets
+- `usePaintWorklet` React hook with SSR safety and deduplication
+- Automatic polyfill loading for non-Chrome browsers
+- `paintTarget` support: `background`, `border`, `mask`
+- Full TypeScript types
+
+---
+
 ## License
 
 MIT © Dominik Pawlikowski
