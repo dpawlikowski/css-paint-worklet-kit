@@ -68,6 +68,7 @@ function NoisePanel() {
     background: '#1a1a2e',
     opacity: 0.4,
     seed: 42,
+    pixel: 2,
   });
 
   const { style, isReady } = usePaintWorklet('noise', opts);
@@ -83,6 +84,7 @@ function NoisePanel() {
         <Slider label="scale" value={opts.scale} min={0.001} max={0.02} step={0.001} onChange={(v) => set('scale', v)} />
         <Slider label="octaves" value={opts.octaves} min={1} max={8} step={1} onChange={(v) => set('octaves', v)} />
         <Slider label="opacity" value={opts.opacity} min={0} max={1} step={0.01} onChange={(v) => set('opacity', v)} />
+        <Slider label="pixel size" value={opts.pixel} min={1} max={8} step={1} onChange={(v) => set('pixel', v)} />
         <Slider label="seed" value={opts.seed} min={1} max={200} step={1} onChange={(v) => set('seed', v)} />
         <ColorPicker label="color" value={opts.color} onChange={(v) => set('color', v)} />
         <ColorPicker label="background" value={opts.background} onChange={(v) => set('background', v)} />
@@ -206,12 +208,15 @@ function GradientPanel() {
 
 function GlitchPanel() {
   const [opts, setOpts] = useState({
-    intensity: 0.4,
-    frequency: 0.2,
+    intensity: 0.5,
+    frequency: 0.25,
     seed: 13,
     color1: '#ff006e',
     color2: '#3a86ff',
     background: '#070709',
+    rgbOffset: 8,
+    style: 'vhs' as 'vhs' | 'digital' | 'rgb' | 'slice' | 'all',
+    scanlines: 0.05,
   });
   const { style, isReady } = usePaintWorklet('glitch', opts);
   const set = <K extends keyof typeof opts>(k: K, v: (typeof opts)[K]) =>
@@ -223,8 +228,20 @@ function GlitchPanel() {
         {!isReady && <span className={styles.loadingHint}>Registering worklet…</span>}
       </div>
       <div className={styles.controls}>
+        <label className={styles.control}>
+          <span className={styles.label}>style</span>
+          <select value={opts.style} onChange={(e) => set('style', e.target.value as typeof opts.style)}>
+            <option value="vhs">vhs</option>
+            <option value="digital">digital</option>
+            <option value="rgb">rgb</option>
+            <option value="slice">slice</option>
+            <option value="all">all</option>
+          </select>
+        </label>
         <Slider label="intensity" value={opts.intensity} min={0} max={1} step={0.01} onChange={(v) => set('intensity', v)} />
         <Slider label="frequency" value={opts.frequency} min={0} max={1} step={0.01} onChange={(v) => set('frequency', v)} />
+        <Slider label="rgb-offset" value={opts.rgbOffset} min={0} max={40} step={1} onChange={(v) => set('rgbOffset', v)} />
+        <Slider label="scanlines" value={opts.scanlines} min={0} max={0.3} step={0.005} onChange={(v) => set('scanlines', v)} />
         <Slider label="seed" value={opts.seed} min={1} max={200} step={1} onChange={(v) => set('seed', v)} />
         <ColorPicker label="color1" value={opts.color1} onChange={(v) => set('color1', v)} />
         <ColorPicker label="color2" value={opts.color2} onChange={(v) => set('color2', v)} />
@@ -242,6 +259,8 @@ function LiquidBlobPanel() {
     seed: 99,
     threshold: 1.1,
     background: '#0a0a14',
+    glow: 0.6,
+    pixel: 3,
   });
   const { style, isReady } = usePaintWorklet('liquid-blob', opts);
   const set = <K extends keyof typeof opts>(k: K, v: (typeof opts)[K]) =>
@@ -256,6 +275,8 @@ function LiquidBlobPanel() {
         <Slider label="count" value={opts.count} min={2} max={15} step={1} onChange={(v) => set('count', v)} />
         <Slider label="radius" value={opts.radius} min={0.1} max={0.8} step={0.01} onChange={(v) => set('radius', v)} />
         <Slider label="threshold" value={opts.threshold} min={0.5} max={2.5} step={0.05} onChange={(v) => set('threshold', v)} />
+        <Slider label="glow" value={opts.glow} min={0} max={1} step={0.05} onChange={(v) => set('glow', v)} />
+        <Slider label="pixel size" value={opts.pixel} min={1} max={8} step={1} onChange={(v) => set('pixel', v)} />
         <Slider label="seed" value={opts.seed} min={1} max={200} step={1} onChange={(v) => set('seed', v)} />
         <ColorPicker label="color" value={opts.color} onChange={(v) => set('color', v)} />
         <ColorPicker label="background" value={opts.background} onChange={(v) => set('background', v)} />

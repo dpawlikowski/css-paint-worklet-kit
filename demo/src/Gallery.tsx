@@ -37,6 +37,7 @@ function NoiseCard() {
     background: '#1a1a2e',
     opacity: 0.4,
     seed: 42,
+    pixel: 2,
   });
 
   return (
@@ -45,8 +46,10 @@ function NoiseCard() {
       description="Perlin/octave noise as background — generated entirely on GPU thread. Seeded for reproducibility."
       code={`usePaintWorklet('noise', {
   scale: 0.005,
+  octaves: 4,
   color: '#6c63ff',
   opacity: 0.4,
+  pixel: 2,   // pixel block size
   seed: 42,
 })`}
       isReady={isReady}
@@ -115,22 +118,27 @@ function GradientCard() {
 
 function GlitchCard() {
   const { style, isReady } = usePaintWorklet('glitch', {
-    intensity: 0.4,
-    frequency: 0.2,
+    intensity: 0.55,
+    frequency: 0.28,
     seed: 13,
     color1: '#ff006e',
     color2: '#3a86ff',
     background: '#070709',
+    style: 'vhs',
+    rgbOffset: 10,
+    scanlines: 0.06,
   });
 
   return (
     <WorkletCard
       title="glitch"
-      description="RGB slice glitch effect with scanlines. Vary seed to get different glitch patterns."
+      description="VHS/digital glitch with RGB channel shift, corruption blocks, and scanlines. Five styles: vhs · digital · rgb · slice · all."
       code={`usePaintWorklet('glitch', {
-  intensity: 0.4,
-  frequency: 0.2,
-  seed: 13,
+  intensity: 0.55,
+  frequency: 0.28,
+  style: 'vhs',      // vhs | digital | rgb | slice | all
+  rgbOffset: 10,     // channel separation in px
+  scanlines: 0.06,   // scanline opacity
   color1: '#ff006e',
   color2: '#3a86ff',
 })`}
@@ -149,17 +157,21 @@ function LiquidBlobCard() {
     seed: 99,
     threshold: 1.1,
     background: '#0a0a14',
+    glow: 0.6,
+    pixel: 3,
   });
 
   return (
     <WorkletCard
       title="liquid-blob"
-      description="Metaball field rendered as background. Each blob is a potential well — threshold controls merging."
+      description="Metaball field rendered as background with soft radial glow. threshold controls blob merging, glow adds ambient light."
       code={`usePaintWorklet('liquid-blob', {
   color: '#7c3aed',
   count: 7,
   radius: 0.4,
   threshold: 1.1,
+  glow: 0.6,   // soft ambient glow 0–1
+  pixel: 3,    // pixel block size
 })`}
       isReady={isReady}
     >
