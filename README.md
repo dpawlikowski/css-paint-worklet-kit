@@ -271,8 +271,8 @@ Every numeric option maps directly to a CSS custom property (`--paint-<worklet>-
 
 ```css
 @keyframes blob-pulse {
-  0%, 100% { --paint-blob-threshold: 1.0; --paint-blob-radius: 0.3; }
-  50%       { --paint-blob-threshold: 1.5; --paint-blob-radius: 0.45; }
+  0%, 100% { --paint-liquid-blob-threshold: 1.0; --paint-liquid-blob-radius: 0.3; }
+  50%       { --paint-liquid-blob-threshold: 1.5; --paint-liquid-blob-radius: 0.45; }
 }
 
 .hero {
