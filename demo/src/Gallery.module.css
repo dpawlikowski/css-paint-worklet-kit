@@ -85,7 +85,6 @@
   display: flex;
   width: 100%;
   height: 100%;
-  gap: 0;
 }
 
 .half {
@@ -125,8 +124,33 @@
   line-height: 1.6;
 }
 
-.code {
+.codeWrapper {
+  position: relative;
   margin-top: 0.25rem;
+}
+
+.code {
   font-size: 0.75rem;
   line-height: 1.6;
+}
+
+.copyBtn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  font-family: inherit;
+}
+
+.copyBtn:hover {
+  color: var(--text);
+  background: rgba(255,255,255,0.1);
 }

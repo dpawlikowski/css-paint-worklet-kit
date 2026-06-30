@@ -14,44 +14,35 @@ const workletSources: Record<WorkletName, string> = {
   'liquid-blob': liquidBlobCode,
 };
 
-const registered = new Map<string, Promise<void>>();
+const registered = new Map<string, Promise<boolean>>();
 
-type PaintWorkletAPI = {
-  addModule: (url: string) => Promise<void>;
-};
+type PaintWorkletAPI = { addModule: (url: string) => Promise<void> };
 
 function getPaintWorklet(): PaintWorkletAPI | undefined {
   return (CSS as unknown as { paintWorklet?: PaintWorkletAPI }).paintWorklet;
 }
 
-export async function registerWorklet(name: WorkletName, customUrl?: string): Promise<void> {
-  if (typeof window === 'undefined') return;
+export async function registerWorklet(name: WorkletName, customUrl?: string): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
 
   const key = customUrl ?? name;
+  if (registered.has(key)) return registered.get(key)!;
 
-  if (registered.has(key)) {
-    return registered.get(key);
-  }
-
-  const task = (async () => {
+  const task = (async (): Promise<boolean> => {
     await ensureWorkletSupport();
 
     const paintWorklet = getPaintWorklet();
     if (!paintWorklet) {
       console.warn(`[css-paint-worklet-kit] CSS.paintWorklet not available for "${name}"`);
-      return;
+      return false;
     }
 
-    let url: string;
-    if (customUrl) {
-      url = customUrl;
-    } else {
-      const code = workletSources[name];
-      const blob = new Blob([code], { type: 'application/javascript' });
-      url = URL.createObjectURL(blob);
-    }
+    const url = customUrl ?? URL.createObjectURL(
+      new Blob([workletSources[name]], { type: 'application/javascript' })
+    );
 
     await paintWorklet.addModule(url);
+    return true;
   })();
 
   registered.set(key, task);

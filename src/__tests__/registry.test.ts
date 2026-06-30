@@ -9,13 +9,13 @@ beforeEach(() => {
 });
 
 describe('registerWorklet', () => {
-  it('returns early on server (window undefined)', async () => {
+  it('returns false on server (window undefined)', async () => {
     const origWindow = globalThis.window;
     // @ts-expect-error simulate SSR
     delete globalThis.window;
 
     const { registerWorklet } = await import('../hook/registry');
-    await expect(registerWorklet('noise')).resolves.toBeUndefined();
+    await expect(registerWorklet('noise')).resolves.toBe(false);
 
     globalThis.window = origWindow;
   });

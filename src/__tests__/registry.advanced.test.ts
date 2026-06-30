@@ -27,6 +27,27 @@ describe('registerWorklet – advanced', () => {
     expect(addModule).toHaveBeenCalledTimes(5);
   });
 
+  it('returns true when paintWorklet is available', async () => {
+    const addModule = vi.fn().mockResolvedValue(undefined);
+    (globalThis as Record<string, unknown>).CSS = { paintWorklet: { addModule } };
+
+    const { registerWorklet } = await import('../hook/registry');
+    const result = await registerWorklet('noise');
+    expect(result).toBe(true);
+  });
+
+  it('returns false when paintWorklet is unavailable', async () => {
+    (globalThis as Record<string, unknown>).CSS = {};
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const { registerWorklet } = await import('../hook/registry');
+    const result = await registerWorklet('noise');
+
+    expect(result).toBe(false);
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('CSS.paintWorklet not available'));
+    warnSpy.mockRestore();
+  });
+
   it('uses customUrl directly without creating a blob', async () => {
     const addModule = vi.fn().mockResolvedValue(undefined);
     const createObjectURL = vi.fn().mockReturnValue('blob:fake');
@@ -38,17 +59,6 @@ describe('registerWorklet – advanced', () => {
 
     expect(addModule).toHaveBeenCalledWith('https://example.com/noise.js');
     expect(createObjectURL).not.toHaveBeenCalled();
-  });
-
-  it('logs a warning when paintWorklet is unavailable', async () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    (globalThis as Record<string, unknown>).CSS = {};
-
-    const { registerWorklet } = await import('../hook/registry');
-    await registerWorklet('noise');
-
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('CSS.paintWorklet not available'));
-    warnSpy.mockRestore();
   });
 
   it('isWorkletRegistered returns false before registration', async () => {

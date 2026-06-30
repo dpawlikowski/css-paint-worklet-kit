@@ -1,4 +1,12 @@
+import { WORKLET_SHARED } from './shared';
+
+const DEFAULT_CONFETTI_COLORS = ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff'];
+
 const confettiWorkletCode = /* js */ `
+${WORKLET_SHARED}
+
+const DEFAULT_CONFETTI_COLORS = ${JSON.stringify(DEFAULT_CONFETTI_COLORS)};
+
 class ConfettiWorklet {
   static get inputProperties() {
     return [
@@ -8,21 +16,6 @@ class ConfettiWorklet {
       '--paint-confetti-size',
       '--paint-confetti-shape',
     ];
-  }
-
-  lcg(seed) {
-    let s = seed % 2147483647;
-    if (s <= 0) s += 2147483646;
-    return () => {
-      s = (s * 16807) % 2147483647;
-      return (s - 1) / 2147483646;
-    };
-  }
-
-  parseColors(raw) {
-    const str = (raw + '').trim();
-    if (!str || str === 'undefined') return ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff'];
-    return str.split(',').map(c => c.trim()).filter(Boolean);
   }
 
   drawCircle(ctx, x, y, size) {
@@ -53,33 +46,33 @@ class ConfettiWorklet {
   }
 
   paint(ctx, geom, props) {
-    const count = parseInt(props.get('--paint-confetti-count')) || 80;
-    const seed = parseFloat(props.get('--paint-confetti-seed')) || 42;
-    const colors = this.parseColors(props.get('--paint-confetti-colors'));
-    const size = parseFloat(props.get('--paint-confetti-size')) || 8;
-    const shape = (props.get('--paint-confetti-shape') + '').trim() || 'mixed';
+    const count  = parseInt(props.get('--paint-confetti-count'))  || 80;
+    const seed   = parseFloat(props.get('--paint-confetti-seed')) || 42;
+    const colors = parseColors(props.get('--paint-confetti-colors'), DEFAULT_CONFETTI_COLORS);
+    const size   = parseFloat(props.get('--paint-confetti-size')) || 8;
+    const shape  = (props.get('--paint-confetti-shape') + '').trim() || 'mixed';
 
     const { width, height } = geom;
-    const rand = this.lcg(seed);
+    const rand = lcg(seed);
+
+    const SHAPES = ['circle', 'rect', 'triangle'];
 
     for (let i = 0; i < count; i++) {
-      const x = rand() * width;
-      const y = rand() * height;
+      const x     = rand() * width;
+      const y     = rand() * height;
       const color = colors[Math.floor(rand() * colors.length)];
-      const s = size * (0.5 + rand() * 0.8);
+      const s     = size * (0.5 + rand() * 0.8);
       const angle = rand() * Math.PI * 2;
       const alpha = 0.6 + rand() * 0.4;
 
       ctx.globalAlpha = alpha;
-      ctx.fillStyle = color;
+      ctx.fillStyle   = color;
 
-      const shapeType = shape === 'mixed'
-        ? ['circle', 'rect', 'triangle'][Math.floor(rand() * 3)]
-        : shape;
+      const shapeType = shape === 'mixed' ? SHAPES[Math.floor(rand() * 3)] : shape;
 
-      if (shapeType === 'circle') this.drawCircle(ctx, x, y, s);
+      if (shapeType === 'circle')        this.drawCircle(ctx, x, y, s);
       else if (shapeType === 'triangle') this.drawTriangle(ctx, x, y, s, angle);
-      else this.drawRect(ctx, x, y, s, angle);
+      else                               this.drawRect(ctx, x, y, s, angle);
     }
 
     ctx.globalAlpha = 1;

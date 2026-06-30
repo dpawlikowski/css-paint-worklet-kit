@@ -1,4 +1,5 @@
 export { usePaintWorklet } from './hook/usePaintWorklet';
+export { useAnimatedWorklet } from './hook/useAnimatedWorklet';
 export { registerWorklet, isWorkletRegistered } from './hook/registry';
 export type {
   WorkletName,
@@ -11,3 +12,4 @@ export type {
   PaintWorkletConfig,
   UsePaintWorkletResult,
 } from './hook/types';
+export type { AnimatedWorkletConfig } from './hook/useAnimatedWorklet';
