@@ -64,4 +64,5 @@ export interface PaintWorkletConfig {
 export interface UsePaintWorkletResult {
   style: React.CSSProperties;
   isReady: boolean;
+  isSupported: boolean;
 }

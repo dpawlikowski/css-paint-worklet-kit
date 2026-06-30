@@ -1,7 +1,7 @@
 {
   "name": "css-paint-worklet-kit",
-  "version": "0.1.0",
-  "description": "Ready-to-use CSS Houdini Paint Worklets with React hook — noise, confetti, gradient, glitch, liquid-blob",
+  "version": "0.2.0",
+  "description": "CSS Houdini Paint Worklets with React hook API — noise, confetti, gradient, glitch, liquid-blob. Off-main-thread canvas effects, SSR safe, TypeScript.",
   "type": "module",
   "main": "./dist/index.cjs.js",
   "module": "./dist/index.esm.js",
@@ -37,10 +37,25 @@
     "glitch",
     "confetti",
     "gradient",
+    "liquid-blob",
+    "metaball",
     "canvas",
-    "css-paint-api"
+    "css-paint-api",
+    "animation",
+    "off-main-thread"
   ],
-  "author": "Dominik Pawlikowski",
+  "author": {
+    "name": "Dominik Pawlikowski",
+    "url": "https://github.com/dpawlikowski"
+  },
+  "homepage": "https://dpawlikowski.github.io/css-paint-worklet-kit/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dpawlikowski/css-paint-worklet-kit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dpawlikowski/css-paint-worklet-kit/issues"
+  },
   "license": "MIT",
   "peerDependencies": {
     "react": ">=17"

@@ -4,7 +4,7 @@ import React from 'react';
 
 // Must mock registry before any import of the hook
 vi.mock('../hook/registry', () => ({
-  registerWorklet: vi.fn().mockResolvedValue(undefined),
+  registerWorklet: vi.fn().mockResolvedValue(true),
   isWorkletRegistered: vi.fn().mockReturnValue(false),
 }));
 
@@ -14,21 +14,21 @@ import { registerWorklet } from '../hook/registry';
 describe('usePaintWorklet', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (registerWorklet as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
+    (registerWorklet as ReturnType<typeof vi.fn>).mockResolvedValue(true);
   });
 
   it('starts with isReady=false and empty style', async () => {
     // Defer resolution so we can observe the initial synchronous render
-    let resolve!: () => void;
+    let resolve!: (v: boolean) => void;
     (registerWorklet as ReturnType<typeof vi.fn>).mockReturnValue(
-      new Promise<void>((r) => { resolve = r; })
+      new Promise<boolean>((r) => { resolve = r; })
     );
 
     const { result } = renderHook(() => usePaintWorklet('noise'));
     expect(result.current.isReady).toBe(false);
     expect(result.current.style).toEqual({});
 
-    await act(async () => { resolve(); await Promise.resolve(); });
+    await act(async () => { resolve(true); await Promise.resolve(); });
   });
 
   it('becomes isReady=true after worklet resolves', async () => {

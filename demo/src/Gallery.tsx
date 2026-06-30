@@ -1,5 +1,22 @@
+import { useState } from 'react';
 import { usePaintWorklet } from 'css-paint-worklet-kit';
 import styles from './Gallery.module.css';
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <button className={styles.copyBtn} onClick={handleCopy} aria-label="Copy code">
+      {copied ? '✓ Copied' : 'Copy'}
+    </button>
+  );
+}
 
 function WorkletCard({
   title,
@@ -7,30 +24,41 @@ function WorkletCard({
   code,
   children,
   isReady,
+  isSupported,
 }: {
   title: string;
   description: string;
   code: string;
   children: React.ReactNode;
   isReady: boolean;
+  isSupported: boolean;
 }) {
   return (
     <div className={styles.card}>
       <div className={styles.preview}>
         {children}
-        {!isReady && <div className={styles.loading}>Loading worklet…</div>}
+        {!isReady && (
+          <div className={styles.loading}>
+            {isSupported === false && typeof CSS !== 'undefined' && !('paintWorklet' in CSS)
+              ? 'CSS Paint API not supported'
+              : 'Loading worklet…'}
+          </div>
+        )}
       </div>
       <div className={styles.info}>
         <h3 className={styles.title}>{title}</h3>
         <p className={styles.description}>{description}</p>
-        <pre className={styles.code}><code>{code}</code></pre>
+        <div className={styles.codeWrapper}>
+          <pre className={styles.code}><code>{code}</code></pre>
+          <CopyButton text={code} />
+        </div>
       </div>
     </div>
   );
 }
 
 function NoiseCard() {
-  const { style, isReady } = usePaintWorklet('noise', {
+  const { style, isReady, isSupported } = usePaintWorklet('noise', {
     scale: 0.005,
     octaves: 4,
     color: '#6c63ff',
@@ -53,6 +81,7 @@ function NoiseCard() {
   seed: 42,
 })`}
       isReady={isReady}
+      isSupported={isSupported}
     >
       <div className={styles.previewBox} style={style} />
     </WorkletCard>
@@ -60,7 +89,7 @@ function NoiseCard() {
 }
 
 function ConfettiCard() {
-  const { style, isReady } = usePaintWorklet('confetti', {
+  const { style, isReady, isSupported } = usePaintWorklet('confetti', {
     count: 120,
     seed: 7,
     colors: ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff', '#5f27cd'],
@@ -79,6 +108,7 @@ function ConfettiCard() {
   shape: 'mixed',
 })`}
       isReady={isReady}
+      isSupported={isSupported}
     >
       <div className={styles.previewBox} style={{ ...style, background: '#0d0d1a' }} />
     </WorkletCard>
@@ -86,7 +116,7 @@ function ConfettiCard() {
 }
 
 function GradientCard() {
-  const { style: linear, isReady } = usePaintWorklet('gradient', {
+  const { style: linear, isReady, isSupported } = usePaintWorklet('gradient', {
     colors: ['#667eea', '#764ba2', '#f64f59'],
     angle: 135,
     type: 'linear',
@@ -107,6 +137,7 @@ function GradientCard() {
   type: 'linear', // | 'radial' | 'mesh'
 })`}
       isReady={isReady}
+      isSupported={isSupported}
     >
       <div className={styles.previewRow}>
         <div className={`${styles.previewBox} ${styles.half}`} style={linear} />
@@ -117,7 +148,7 @@ function GradientCard() {
 }
 
 function GlitchCard() {
-  const { style, isReady } = usePaintWorklet('glitch', {
+  const { style, isReady, isSupported } = usePaintWorklet('glitch', {
     intensity: 0.55,
     frequency: 0.28,
     seed: 13,
@@ -143,6 +174,7 @@ function GlitchCard() {
   color2: '#3a86ff',
 })`}
       isReady={isReady}
+      isSupported={isSupported}
     >
       <div className={styles.previewBox} style={style} />
     </WorkletCard>
@@ -150,7 +182,7 @@ function GlitchCard() {
 }
 
 function LiquidBlobCard() {
-  const { style, isReady } = usePaintWorklet('liquid-blob', {
+  const { style, isReady, isSupported } = usePaintWorklet('liquid-blob', {
     color: '#7c3aed',
     count: 7,
     radius: 0.4,
@@ -174,6 +206,7 @@ function LiquidBlobCard() {
   pixel: 3,    // pixel block size
 })`}
       isReady={isReady}
+      isSupported={isSupported}
     >
       <div className={styles.previewBox} style={style} />
     </WorkletCard>
@@ -191,10 +224,11 @@ export default function Gallery() {
           <code>npm install css-paint-worklet-kit</code>
         </p>
         <div className={styles.badges}>
-          <span className={styles.badge}>Zero JS on main thread</span>
+          <span className={styles.badge}>Off-main-thread rendering</span>
           <span className={styles.badge}>React hook API</span>
           <span className={styles.badge}>TypeScript</span>
           <span className={styles.badge}>SSR safe</span>
+          <span className={styles.badge}>Tree-shakeable</span>
         </div>
       </div>
 
