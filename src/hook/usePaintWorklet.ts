@@ -9,6 +9,10 @@ import type {
 
 type CSSValue = string | number | undefined;
 
+function toKebabCase(key: string): string {
+  return key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
+}
+
 function buildCustomProperties(
   name: WorkletName,
   options: Record<string, CSSValue>
@@ -16,7 +20,7 @@ function buildCustomProperties(
   const props: Record<string, string> = {};
   for (const [key, value] of Object.entries(options)) {
     if (value === undefined) continue;
-    props[`--paint-${name}-${key}`] = Array.isArray(value) ? value.join(',') : String(value);
+    props[`--paint-${name}-${toKebabCase(key)}`] = Array.isArray(value) ? value.join(',') : String(value);
   }
   return props;
 }

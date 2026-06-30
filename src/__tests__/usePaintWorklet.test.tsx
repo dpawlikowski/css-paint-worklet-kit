@@ -10,6 +10,8 @@ vi.mock('../hook/registry', () => ({
 
 import { usePaintWorklet } from '../hook/usePaintWorklet';
 import { registerWorklet } from '../hook/registry';
+import liquidBlobCode from '../worklets/liquid-blob';
+import glitchCode from '../worklets/glitch';
 
 describe('usePaintWorklet', () => {
   beforeEach(() => {
@@ -161,5 +163,61 @@ describe('usePaintWorklet', () => {
     );
 
     consoleSpy.mockRestore();
+  });
+
+  it('converts camelCase option keys to kebab-case CSS property names', async () => {
+    const { result } = renderHook(() =>
+      usePaintWorklet('glitch', { rgbOffset: 12 })
+    );
+
+    await act(async () => { await Promise.resolve(); });
+
+    expect(result.current.style).toMatchObject({
+      '--paint-glitch-rgb-offset': '12',
+    });
+    expect(Object.keys(result.current.style)).not.toContain('--paint-glitch-rgbOffset');
+  });
+
+  it('every option produced for liquid-blob matches a property the worklet declares as inputProperties', async () => {
+    const options = {
+      color: '#7c3aed',
+      count: 7,
+      radius: 0.4,
+      seed: 99,
+      threshold: 1.1,
+      background: '#0a0a14',
+      glow: 0.6,
+      pixel: 3,
+    };
+    const { result } = renderHook(() => usePaintWorklet('liquid-blob', options));
+
+    await act(async () => { await Promise.resolve(); });
+
+    for (const key of Object.keys(result.current.style)) {
+      if (!key.startsWith('--paint-')) continue;
+      expect(liquidBlobCode).toContain(`'${key}'`);
+    }
+  });
+
+  it('every option produced for glitch matches a property the worklet declares as inputProperties', async () => {
+    const options = {
+      intensity: 0.5,
+      frequency: 0.25,
+      seed: 13,
+      color1: '#ff006e',
+      color2: '#3a86ff',
+      background: '#070709',
+      rgbOffset: 8,
+      style: 'vhs' as const,
+      scanlines: 0.05,
+    };
+    const { result } = renderHook(() => usePaintWorklet('glitch', options));
+
+    await act(async () => { await Promise.resolve(); });
+
+    for (const key of Object.keys(result.current.style)) {
+      if (!key.startsWith('--paint-')) continue;
+      expect(glitchCode).toContain(`'${key}'`);
+    }
   });
 });

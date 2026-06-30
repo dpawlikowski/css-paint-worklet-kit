@@ -39,8 +39,8 @@ describe('worklet source strings', () => {
   it('liquid-blob exports a non-empty string containing registerPaint("liquid-blob")', () => {
     expect(typeof liquidBlobCode).toBe('string');
     expect(liquidBlobCode).toContain("registerPaint('liquid-blob'");
-    expect(liquidBlobCode).toContain('--paint-blob-color');
-    expect(liquidBlobCode).toContain('--paint-blob-threshold');
+    expect(liquidBlobCode).toContain('--paint-liquid-blob-color');
+    expect(liquidBlobCode).toContain('--paint-liquid-blob-threshold');
   });
 
   it('all worklet sources declare inputProperties', () => {

@@ -6,26 +6,26 @@ ${WORKLET_SHARED}
 class LiquidBlobWorklet {
   static get inputProperties() {
     return [
-      '--paint-blob-color',
-      '--paint-blob-count',
-      '--paint-blob-radius',
-      '--paint-blob-seed',
-      '--paint-blob-threshold',
-      '--paint-blob-background',
-      '--paint-blob-glow',
-      '--paint-blob-pixel',
+      '--paint-liquid-blob-color',
+      '--paint-liquid-blob-count',
+      '--paint-liquid-blob-radius',
+      '--paint-liquid-blob-seed',
+      '--paint-liquid-blob-threshold',
+      '--paint-liquid-blob-background',
+      '--paint-liquid-blob-glow',
+      '--paint-liquid-blob-pixel',
     ];
   }
 
   paint(ctx, geom, props) {
-    const color     = (props.get('--paint-blob-color')       + '').trim() || '#7c3aed';
-    const count     = parseInt(props.get('--paint-blob-count'))     || 6;
-    const radius    = parseFloat(props.get('--paint-blob-radius'))  || 0.35;
-    const seed      = parseFloat(props.get('--paint-blob-seed'))    || 42;
-    const threshold = parseFloat(props.get('--paint-blob-threshold')) || 1.2;
-    const bg        = (props.get('--paint-blob-background') + '').trim() || 'transparent';
-    const glow      = parseFloat(props.get('--paint-blob-glow'))    || 0.5;
-    const pixelSize = Math.max(1, parseInt(props.get('--paint-blob-pixel')) || 3);
+    const color     = (props.get('--paint-liquid-blob-color')       + '').trim() || '#7c3aed';
+    const count     = parseInt(props.get('--paint-liquid-blob-count'))     || 6;
+    const radius    = parseFloat(props.get('--paint-liquid-blob-radius'))  || 0.35;
+    const seed      = parseFloat(props.get('--paint-liquid-blob-seed'))    || 42;
+    const threshold = parseFloat(props.get('--paint-liquid-blob-threshold')) || 1.2;
+    const bg        = (props.get('--paint-liquid-blob-background') + '').trim() || 'transparent';
+    const glow      = parseFloat(props.get('--paint-liquid-blob-glow'))    || 0.5;
+    const pixelSize = Math.max(1, parseInt(props.get('--paint-liquid-blob-pixel')) || 3);
 
     const { width, height } = geom;
     const rand = lcg(seed);
