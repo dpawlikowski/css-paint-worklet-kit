@@ -1,0 +1,9 @@
+node_modules/
+dist-demo/
+demo/
+src/
+.github/
+*.config.ts
+*.config.js
+tsconfig.json
+IMPLEMENTATION_PLAN.md
