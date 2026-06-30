@@ -8,10 +8,10 @@ class NoiseWorklet {
       '--paint-noise-background',
       '--paint-noise-opacity',
       '--paint-noise-seed',
+      '--paint-noise-pixel',
     ];
   }
 
-  // Seeded LCG pseudo-random
   lcg(seed) {
     let s = seed % 2147483647;
     if (s <= 0) s += 2147483646;
@@ -22,7 +22,6 @@ class NoiseWorklet {
   }
 
   fade(t) { return t * t * t * (t * (t * 6 - 15) + 10); }
-
   lerp(a, b, t) { return a + t * (b - a); }
 
   grad(hash, x, y) {
@@ -77,6 +76,7 @@ class NoiseWorklet {
     const bg = (props.get('--paint-noise-background') + '').trim() || 'transparent';
     const opacity = parseFloat(props.get('--paint-noise-opacity')) || 0.15;
     const seed = parseFloat(props.get('--paint-noise-seed')) || 42;
+    const pixelSize = Math.max(1, parseInt(props.get('--paint-noise-pixel')) || 2);
 
     const { width, height } = geom;
     const rand = this.lcg(seed);
@@ -87,26 +87,17 @@ class NoiseWorklet {
       ctx.fillRect(0, 0, width, height);
     }
 
-    const imageData = ctx.getImageData(0, 0, width, height);
-    const data = imageData.data;
-
-    const r = parseInt(color.slice(1, 3), 16);
-    const g = parseInt(color.slice(3, 5), 16);
-    const b = parseInt(color.slice(5, 7), 16);
-
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        const n = this.octaveNoise(x * scale, y * scale, octaves, perm);
-        const normalized = (n + 1) / 2;
-        const idx = (y * width + x) * 4;
-        data[idx] = r;
-        data[idx + 1] = g;
-        data[idx + 2] = b;
-        data[idx + 3] = Math.round(normalized * opacity * 255);
+    ctx.fillStyle = color;
+    for (let py = 0; py < height; py += pixelSize) {
+      for (let px = 0; px < width; px += pixelSize) {
+        const n = this.octaveNoise(px * scale, py * scale, octaves, perm);
+        const alpha = ((n + 1) / 2) * opacity;
+        if (alpha < 0.005) continue;
+        ctx.globalAlpha = alpha;
+        ctx.fillRect(px, py, pixelSize, pixelSize);
       }
     }
-
-    ctx.putImageData(imageData, 0, 0);
+    ctx.globalAlpha = 1;
   }
 }
 

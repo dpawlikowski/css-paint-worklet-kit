@@ -7,6 +7,7 @@ export interface NoiseOptions {
   background?: string;
   opacity?: number;
   seed?: number;
+  pixel?: number;
 }
 
 export interface ConfettiOptions {
@@ -31,6 +32,9 @@ export interface GlitchOptions {
   color1?: string;
   color2?: string;
   background?: string;
+  rgbOffset?: number;
+  style?: 'vhs' | 'digital' | 'rgb' | 'slice' | 'all';
+  scanlines?: number;
 }
 
 export interface LiquidBlobOptions {
@@ -40,6 +44,8 @@ export interface LiquidBlobOptions {
   seed?: number;
   threshold?: number;
   background?: string;
+  glow?: number;
+  pixel?: number;
 }
 
 export interface WorkletOptions {

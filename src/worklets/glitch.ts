@@ -8,6 +8,9 @@ class GlitchWorklet {
       '--paint-glitch-color1',
       '--paint-glitch-color2',
       '--paint-glitch-background',
+      '--paint-glitch-rgb-offset',
+      '--paint-glitch-style',
+      '--paint-glitch-scanlines',
     ];
   }
 
@@ -21,12 +24,83 @@ class GlitchWorklet {
   }
 
   hexToRgb(hex) {
-    const h = hex.replace('#', '');
+    const h = (hex + '').replace('#', '').replace(/[^0-9a-fA-F]/g, '').padEnd(6, '0').slice(0, 6);
     return [
       parseInt(h.slice(0, 2), 16),
       parseInt(h.slice(2, 4), 16),
       parseInt(h.slice(4, 6), 16),
     ];
+  }
+
+  drawSlices(ctx, geom, rand, intensity, frequency, color1, color2, width, height) {
+    const sliceCount = Math.floor(6 + intensity * 22);
+    const [r1,g1,b1] = this.hexToRgb(color1);
+    const [r2,g2,b2] = this.hexToRgb(color2);
+
+    for (let i = 0; i < sliceCount; i++) {
+      if (rand() > frequency) continue;
+      const y = rand() * height;
+      const h = 2 + rand() * height * 0.07 * intensity;
+      const offset = (rand() - 0.5) * width * 0.22 * intensity;
+      const useC1 = rand() > 0.5;
+      const [cr,cg,cb] = useC1 ? [r1,g1,b1] : [r2,g2,b2];
+      ctx.globalAlpha = 0.3 + rand() * 0.5;
+      ctx.fillStyle = \`rgb(\${cr},\${cg},\${cb})\`;
+      ctx.fillRect(offset, y, width * (0.2 + rand() * 0.8), h);
+    }
+  }
+
+  drawRgbShift(ctx, geom, rand, intensity, frequency, rgbOffset, color1, color2, width, height) {
+    const shiftCount = Math.floor(4 + intensity * 12);
+    const [r1,,] = this.hexToRgb(color1);
+    const [,g2,] = this.hexToRgb(color2);
+    const [,,b2] = this.hexToRgb(color2);
+
+    for (let i = 0; i < shiftCount; i++) {
+      if (rand() > frequency * 1.4) continue;
+      const y = rand() * height;
+      const h = 1 + rand() * height * 0.06 * intensity;
+      const dx = (rand() - 0.5) * width * 0.12 * intensity;
+
+      // Red
+      ctx.globalAlpha = 0.45 + rand() * 0.3;
+      ctx.fillStyle = \`rgb(\${r1},0,0)\`;
+      ctx.fillRect(dx - rgbOffset, y, width, h);
+
+      // Green (middle)
+      ctx.globalAlpha = 0.3 + rand() * 0.2;
+      ctx.fillStyle = \`rgb(0,\${g2},0)\`;
+      ctx.fillRect(dx, y, width, h);
+
+      // Blue
+      ctx.globalAlpha = 0.45 + rand() * 0.3;
+      ctx.fillStyle = \`rgb(0,0,\${b2})\`;
+      ctx.fillRect(dx + rgbOffset, y, width, h);
+    }
+  }
+
+  drawCorruption(ctx, geom, rand, intensity, frequency, color1, color2, width, height) {
+    const blockCount = Math.floor(3 + intensity * 18);
+    for (let i = 0; i < blockCount; i++) {
+      if (rand() > frequency * 1.6) continue;
+      const x = rand() * width;
+      const y = rand() * height;
+      const w = 4 + rand() * width * 0.28 * intensity;
+      const h = 1 + rand() * 12 * intensity;
+      ctx.globalAlpha = 0.35 + rand() * 0.55;
+      ctx.fillStyle = rand() > 0.5 ? color1 : color2;
+      ctx.fillRect(x, y, w, h);
+    }
+
+    // Bright white flashes
+    const flashCount = Math.floor(rand() * 3 * intensity);
+    for (let i = 0; i < flashCount; i++) {
+      const x = rand() * width;
+      const y = rand() * height;
+      ctx.globalAlpha = 0.6 + rand() * 0.4;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x, y, 2 + rand() * width * 0.15, 1 + rand() * 3);
+    }
   }
 
   paint(ctx, geom, props) {
@@ -36,6 +110,9 @@ class GlitchWorklet {
     const color1 = (props.get('--paint-glitch-color1') + '').trim() || '#ff006e';
     const color2 = (props.get('--paint-glitch-color2') + '').trim() || '#3a86ff';
     const bg = (props.get('--paint-glitch-background') + '').trim() || '#0a0a0a';
+    const rgbOffset = parseFloat(props.get('--paint-glitch-rgb-offset')) || 8;
+    const glitchStyle = (props.get('--paint-glitch-style') + '').trim() || 'vhs';
+    const scanlines = parseFloat(props.get('--paint-glitch-scanlines')) || 0.05;
 
     const { width, height } = geom;
     const rand = this.lcg(seed);
@@ -43,48 +120,49 @@ class GlitchWorklet {
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, width, height);
 
-    const sliceCount = Math.floor(8 + intensity * 20);
-    const [r1, g1, b1] = this.hexToRgb(color1);
-    const [r2, g2, b2] = this.hexToRgb(color2);
-
-    for (let i = 0; i < sliceCount; i++) {
-      if (rand() > frequency) continue;
-
-      const y = rand() * height;
-      const sliceH = (2 + rand() * height * 0.08 * intensity);
-      const offset = (rand() - 0.5) * width * 0.2 * intensity;
-      const alpha = 0.3 + rand() * 0.5;
-
-      ctx.save();
-      ctx.globalAlpha = alpha;
-
-      // RGB channel shift blocks
-      const useColor1 = rand() > 0.5;
-      const [cr, cg, cb] = useColor1 ? [r1, g1, b1] : [r2, g2, b2];
-      ctx.fillStyle = \`rgb(\${cr},\${cg},\${cb})\`;
-      ctx.fillRect(offset, y, width * (0.3 + rand() * 0.7), sliceH);
-
-      ctx.restore();
+    if (glitchStyle === 'vhs' || glitchStyle === 'all') {
+      this.drawSlices(ctx, geom, rand, intensity, frequency, color1, color2, width, height);
+      this.drawRgbShift(ctx, geom, rand, intensity, frequency, rgbOffset, color1, color2, width, height);
+    }
+    if (glitchStyle === 'digital' || glitchStyle === 'all') {
+      this.drawCorruption(ctx, geom, rand, intensity, frequency, color1, color2, width, height);
+    }
+    if (glitchStyle === 'rgb') {
+      this.drawRgbShift(ctx, geom, rand, intensity, frequency, rgbOffset, color1, color2, width, height);
+    }
+    if (glitchStyle === 'slice') {
+      this.drawSlices(ctx, geom, rand, intensity, frequency, color1, color2, width, height);
     }
 
     // Scanlines
-    const lineAlpha = 0.04 + intensity * 0.06;
-    ctx.fillStyle = '#000';
-    for (let y = 0; y < height; y += 3) {
-      ctx.globalAlpha = lineAlpha;
-      ctx.fillRect(0, y, width, 1);
+    if (scanlines > 0) {
+      ctx.fillStyle = '#000';
+      for (let y = 0; y < height; y += 3) {
+        ctx.globalAlpha = scanlines;
+        ctx.fillRect(0, y, width, 1);
+      }
     }
-    ctx.globalAlpha = 1;
 
-    // Vertical noise strips
-    const stripCount = Math.floor(rand() * 3 * intensity);
-    for (let i = 0; i < stripCount; i++) {
+    // Vertical noise bars
+    ctx.globalAlpha = 1;
+    const barCount = Math.floor(rand() * 5 * intensity);
+    for (let i = 0; i < barCount; i++) {
       const x = rand() * width;
       const w = 1 + rand() * 3;
-      ctx.globalAlpha = 0.1 + rand() * 0.2;
+      ctx.globalAlpha = 0.12 + rand() * 0.22;
       ctx.fillStyle = rand() > 0.5 ? color1 : color2;
       ctx.fillRect(x, 0, w, height);
     }
+
+    // Horizontal tear lines
+    const tearCount = Math.floor(rand() * 4 * intensity);
+    for (let i = 0; i < tearCount; i++) {
+      const y = rand() * height;
+      ctx.globalAlpha = 0.5 + rand() * 0.5;
+      ctx.fillStyle = rand() > 0.6 ? '#ffffff' : (rand() > 0.5 ? color1 : color2);
+      ctx.fillRect(0, y, width, 1 + rand() * 2);
+    }
+
     ctx.globalAlpha = 1;
   }
 }
