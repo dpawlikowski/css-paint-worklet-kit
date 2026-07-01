@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { usePaintWorklet } from 'css-paint-worklet-kit';
+import { usePaintWorklet, usePointerWorklet } from 'css-paint-worklet-kit';
 import styles from './Gallery.module.css';
 
 function CopyButton({ text }: { text: string }) {
@@ -213,6 +213,36 @@ function LiquidBlobCard() {
   );
 }
 
+function SpotlightCard() {
+  const { ref, style, isReady, isSupported } = usePointerWorklet('spotlight', {
+    x: 0.5,
+    y: 0.5,
+    color: '#7c3aed',
+    background: '#0a0a14',
+    radius: 0.45,
+    intensity: 0.85,
+    softness: 0.6,
+  });
+
+  return (
+    <WorkletCard
+      title="spotlight"
+      description="Cursor-following glow. Pointer position is written straight to the DOM style — zero React re-renders per mousemove."
+      code={`const { ref, style } = usePointerWorklet('spotlight', {
+  color: '#7c3aed',
+  radius: 0.45,
+  intensity: 0.85,
+})
+
+<div ref={ref} style={style} />`}
+      isReady={isReady}
+      isSupported={isSupported}
+    >
+      <div ref={ref as React.RefObject<HTMLDivElement>} className={styles.previewBox} style={style} />
+    </WorkletCard>
+  );
+}
+
 export default function Gallery() {
   return (
     <div className={styles.gallery}>
@@ -238,6 +268,7 @@ export default function Gallery() {
         <GradientCard />
         <GlitchCard />
         <LiquidBlobCard />
+        <SpotlightCard />
       </div>
     </div>
   );

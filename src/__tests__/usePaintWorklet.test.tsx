@@ -199,6 +199,42 @@ describe('usePaintWorklet', () => {
     }
   });
 
+  it('does not call registerWorklet when enabled=false', async () => {
+    renderHook(() => usePaintWorklet('noise', {}, { enabled: false }));
+
+    await act(async () => { await Promise.resolve(); });
+
+    expect(registerWorklet).not.toHaveBeenCalled();
+  });
+
+  it('calls registerWorklet once enabled flips to true', async () => {
+    const { rerender } = renderHook(
+      ({ enabled }: { enabled: boolean }) => usePaintWorklet('noise', {}, { enabled }),
+      { initialProps: { enabled: false } }
+    );
+
+    await act(async () => { await Promise.resolve(); });
+    expect(registerWorklet).not.toHaveBeenCalled();
+
+    rerender({ enabled: true });
+    await act(async () => { await Promise.resolve(); });
+
+    expect(registerWorklet).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onError when registerWorklet rejects', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    (registerWorklet as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('boom'));
+    const onError = vi.fn();
+
+    renderHook(() => usePaintWorklet('noise', {}, { onError }));
+
+    await act(async () => { await Promise.resolve(); });
+
+    expect(onError).toHaveBeenCalledWith(expect.any(Error));
+    vi.restoreAllMocks();
+  });
+
   it('every option produced for glitch matches a property the worklet declares as inputProperties', async () => {
     const options = {
       intensity: 0.5,

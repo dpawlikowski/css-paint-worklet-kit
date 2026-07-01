@@ -1,4 +1,4 @@
-export type WorkletName = 'noise' | 'confetti' | 'gradient' | 'glitch' | 'liquid-blob';
+export type WorkletName = 'noise' | 'confetti' | 'gradient' | 'glitch' | 'liquid-blob' | 'spotlight';
 
 export interface NoiseOptions {
   scale?: number;
@@ -48,17 +48,32 @@ export interface LiquidBlobOptions {
   pixel?: number;
 }
 
+export interface SpotlightOptions {
+  x?: number;
+  y?: number;
+  color?: string;
+  background?: string;
+  radius?: number;
+  intensity?: number;
+  softness?: number;
+}
+
 export interface WorkletOptions {
   noise: NoiseOptions;
   confetti: ConfettiOptions;
   gradient: GradientOptions;
   glitch: GlitchOptions;
   'liquid-blob': LiquidBlobOptions;
+  spotlight: SpotlightOptions;
 }
 
 export interface PaintWorkletConfig {
   workletUrl?: string;
   paintTarget?: 'background' | 'border' | 'mask';
+  /** Skip registration until true. Useful for lazy-loading a worklet only when it enters the viewport. Default: true. */
+  enabled?: boolean;
+  /** Called if worklet registration throws (e.g. blocked polyfill fetch). */
+  onError?: (error: unknown) => void;
 }
 
 export interface UsePaintWorkletResult {

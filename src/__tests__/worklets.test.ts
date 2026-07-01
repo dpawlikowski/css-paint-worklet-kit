@@ -4,8 +4,9 @@ import confettiCode from '../worklets/confetti';
 import gradientCode from '../worklets/gradient';
 import glitchCode from '../worklets/glitch';
 import liquidBlobCode from '../worklets/liquid-blob';
+import spotlightCode from '../worklets/spotlight';
 
-const ALL_CODES = [noiseCode, confettiCode, gradientCode, glitchCode, liquidBlobCode];
+const ALL_CODES = [noiseCode, confettiCode, gradientCode, glitchCode, liquidBlobCode, spotlightCode];
 
 describe('worklet source strings', () => {
   it('noise exports a non-empty string containing registerPaint("noise")', () => {
@@ -58,9 +59,17 @@ describe('worklet source strings', () => {
   });
 
   it('worklets that use color parsing include hexToRgb helper', () => {
-    for (const code of [gradientCode, glitchCode, liquidBlobCode]) {
+    for (const code of [gradientCode, glitchCode, liquidBlobCode, spotlightCode]) {
       expect(code).toContain('function hexToRgb(');
     }
+  });
+
+  it('spotlight exports a non-empty string containing registerPaint("spotlight")', () => {
+    expect(typeof spotlightCode).toBe('string');
+    expect(spotlightCode).toContain("registerPaint('spotlight'");
+    expect(spotlightCode).toContain('--paint-spotlight-x');
+    expect(spotlightCode).toContain('--paint-spotlight-y');
+    expect(spotlightCode).toContain('--paint-spotlight-color');
   });
 
   it('worklets that parse color lists include parseColors helper', () => {
