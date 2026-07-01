@@ -55,8 +55,10 @@ export function usePaintWorklet<N extends WorkletName>(
   const [isSupported, setIsSupported] = useState(false);
   const registeredRef = useRef(false);
 
+  const enabled = config.enabled ?? true;
+
   useEffect(() => {
-    if (registeredRef.current) return;
+    if (!enabled || registeredRef.current) return;
     registeredRef.current = true;
 
     registerWorklet(name, config.workletUrl)
@@ -66,13 +68,16 @@ export function usePaintWorklet<N extends WorkletName>(
       })
       .catch((err) => {
         console.error(`[css-paint-worklet-kit] Failed to register worklet "${name}":`, err);
+        config.onError?.(err);
       });
-  }, [name, config.workletUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name, config.workletUrl, enabled]);
 
+  const optionsKey = JSON.stringify(options);
   const style = useMemo(
     () => buildStyle(name, (options ?? {}) as Record<string, CSSValue>, config, isReady),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [name, isReady, config.paintTarget, JSON.stringify(options)]
+    [name, isReady, config.paintTarget, optionsKey]
   );
 
   return { style, isReady, isSupported };

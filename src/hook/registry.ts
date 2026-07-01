@@ -3,6 +3,7 @@ import confettiCode from '../worklets/confetti';
 import gradientCode from '../worklets/gradient';
 import glitchCode from '../worklets/glitch';
 import liquidBlobCode from '../worklets/liquid-blob';
+import spotlightCode from '../worklets/spotlight';
 import { ensureWorkletSupport } from '../polyfill';
 import type { WorkletName } from './types';
 
@@ -12,6 +13,7 @@ const workletSources: Record<WorkletName, string> = {
   gradient: gradientCode,
   glitch: glitchCode,
   'liquid-blob': liquidBlobCode,
+  spotlight: spotlightCode,
 };
 
 const registered = new Map<string, Promise<boolean>>();

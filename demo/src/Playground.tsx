@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { usePaintWorklet } from 'css-paint-worklet-kit';
+import { usePaintWorklet, usePointerWorklet } from 'css-paint-worklet-kit';
 import type { WorkletName } from 'css-paint-worklet-kit';
 import styles from './Playground.module.css';
 
@@ -285,6 +285,39 @@ function LiquidBlobPanel() {
   );
 }
 
+function SpotlightPanel() {
+  const [opts, setOpts] = useState({
+    color: '#7c3aed',
+    background: '#0a0a14',
+    radius: 0.4,
+    intensity: 0.8,
+    softness: 0.6,
+  });
+  const { ref, style, isReady } = usePointerWorklet('spotlight', { x: 0.5, y: 0.5, ...opts });
+  const set = <K extends keyof typeof opts>(k: K, v: (typeof opts)[K]) =>
+    setOpts((p) => ({ ...p, [k]: v }));
+
+  return (
+    <div className={styles.panel}>
+      <div
+        ref={ref as React.RefObject<HTMLDivElement>}
+        className={styles.preview}
+        style={style}
+      >
+        {!isReady && <span className={styles.loadingHint}>Registering worklet…</span>}
+        {isReady && <span className={styles.loadingHint}>Move your cursor over this box ✨</span>}
+      </div>
+      <div className={styles.controls}>
+        <Slider label="radius" value={opts.radius} min={0.1} max={0.8} step={0.01} onChange={(v) => set('radius', v)} />
+        <Slider label="intensity" value={opts.intensity} min={0} max={1} step={0.01} onChange={(v) => set('intensity', v)} />
+        <Slider label="softness" value={opts.softness} min={0} max={1} step={0.01} onChange={(v) => set('softness', v)} />
+        <ColorPicker label="color" value={opts.color} onChange={(v) => set('color', v)} />
+        <ColorPicker label="background" value={opts.background} onChange={(v) => set('background', v)} />
+      </div>
+    </div>
+  );
+}
+
 // ─── Main ───────────────────────────────────────────────────────────────────
 
 const WORKLETS: { name: WorkletName; label: string }[] = [
@@ -293,6 +326,7 @@ const WORKLETS: { name: WorkletName; label: string }[] = [
   { name: 'gradient', label: 'gradient' },
   { name: 'glitch', label: 'glitch' },
   { name: 'liquid-blob', label: 'liquid-blob' },
+  { name: 'spotlight', label: 'spotlight ✨' },
 ];
 
 const PANELS: Record<WorkletName, React.ComponentType> = {
@@ -301,6 +335,7 @@ const PANELS: Record<WorkletName, React.ComponentType> = {
   gradient: GradientPanel,
   glitch: GlitchPanel,
   'liquid-blob': LiquidBlobPanel,
+  spotlight: SpotlightPanel,
 };
 
 export default function Playground() {

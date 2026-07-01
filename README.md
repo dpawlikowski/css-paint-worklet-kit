@@ -22,6 +22,7 @@ Five production-ready paint worklets, each accessible via a single React hook ca
 | `gradient` | Multi-stop linear, radial, or mesh gradient |
 | `glitch` | VHS/RGB-slice glitch with scanlines — five style variants |
 | `liquid-blob` | Metaball field with soft radial glow |
+| `spotlight` | Cursor-following radial glow — pairs with `usePointerWorklet` for zero-re-render pointer tracking |
 
 All worklets run inside a `PaintWorkletGlobalScope` — completely off the main thread. The hook handles registration, deduplication, polyfill loading, and SSR safety automatically.
 
@@ -113,6 +114,8 @@ return (
 |---|---|---|---|
 | `paintTarget` | `'background' \| 'border' \| 'mask'` | `'background'` | Which CSS property receives `paint()` |
 | `workletUrl` | `string` | — | Load worklet from a URL instead of an inline blob |
+| `enabled` | `boolean` | `true` | Skip registration until `true` — pair with `IntersectionObserver` to lazy-load a worklet only when its element is visible |
+| `onError` | `(error: unknown) => void` | — | Called if registration throws (e.g. the polyfill fetch was blocked by CSP) |
 
 ```tsx
 // Apply as a mask instead of background
@@ -120,6 +123,14 @@ const { style } = usePaintWorklet('noise', { opacity: 0.5 }, { paintTarget: 'mas
 
 // Supply a custom worklet file (e.g. from your CDN)
 const { style } = usePaintWorklet('noise', opts, { workletUrl: '/worklets/noise.js' });
+
+// Lazy-load only once the element is on screen, and react to registration failures
+const [visible, setVisible] = useState(false);
+const { style } = usePaintWorklet(
+  'noise',
+  opts,
+  { enabled: visible, onError: (err) => reportToSentry(err) }
+);
 ```
 
 ---
@@ -155,9 +166,12 @@ function AnimatedNoise() {
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `fps` | `number` | `30` | Target frames per second |
+| `respectReducedMotion` | `boolean` | `true` | Freeze on the first frame for users with `prefers-reduced-motion: reduce` instead of running the `requestAnimationFrame` loop |
 | `paintTarget` | `'background' \| 'border' \| 'mask'` | `'background'` | Inherited from `PaintWorkletConfig` |
 
 > **Tip:** For animated glitch/noise effects, animate `seed` over time. The worklet is deterministic per seed, so this produces smooth pseudo-random motion.
+
+> **Accessibility:** `useAnimatedWorklet` respects `prefers-reduced-motion` by default — it renders a single static frame instead of animating. Set `respectReducedMotion: false` only if the animation is essential content rather than decoration.
 
 ---
 
@@ -262,6 +276,57 @@ usePaintWorklet('liquid-blob', {
   pixel?: number;       // 3          — pixel block size (larger = faster, chunkier)
 });
 ```
+
+### `spotlight`
+
+A radial glow centered at `(x, y)` — fractions of the element's size (`0–1`, default `0.5, 0.5`). Designed to be driven by pointer position via `usePointerWorklet` below, but works with any `x`/`y` source (scroll position, animation, etc.).
+
+```ts
+usePaintWorklet('spotlight', {
+  x?: number;           // 0.5   — glow center, 0–1 fraction of width
+  y?: number;           // 0.5   — glow center, 0–1 fraction of height
+  color?: string;       // '#7c3aed'
+  background?: string;  // 'transparent'
+  radius?: number;      // 0.35  — glow radius, fraction of max(width, height)
+  intensity?: number;   // 0.8   — peak opacity (0–1)
+  softness?: number;    // 0.6   — falloff position (0–1, higher = softer edge)
+});
+```
+
+---
+
+## `usePointerWorklet(name, options?, config?)`
+
+A **wow-factor addition for interactive UIs**: like `usePaintWorklet`, but it also tracks the pointer position over the element and writes it straight to `--paint-<name>-x` / `-y` **via the DOM**, not React state. Moving the mouse never triggers a re-render — the worklet repaints on the CSS custom property change alone, entirely off the main thread.
+
+```ts
+function usePointerWorklet<N extends WorkletName>(
+  name: N,
+  options?: WorkletOptions[N],
+  config?: PaintWorkletConfig
+): {
+  ref: React.RefObject<HTMLElement>;
+  style: React.CSSProperties;
+  isReady: boolean;
+  isSupported: boolean;
+}
+```
+
+```tsx
+import { usePointerWorklet } from 'css-paint-worklet-kit';
+
+function SpotlightCard() {
+  const { ref, style } = usePointerWorklet('spotlight', {
+    color: '#7c3aed',
+    radius: 0.45,
+    intensity: 0.85,
+  });
+
+  return <div ref={ref} style={{ ...style, height: '300px' }} />;
+}
+```
+
+Attach `ref` to the element that receives `style` — pointer coordinates are measured relative to that element's bounding box. Works with any worklet that reads `--paint-<name>-x` / `-y` (currently `spotlight`, but any custom worklet following the same convention benefits too).
 
 ---
 
@@ -374,6 +439,16 @@ npm run build:demo # build demo for GitHub Pages
 ---
 
 ## Changelog
+
+### Unreleased
+
+- **New `spotlight` worklet** — cursor-following radial glow
+- **New `usePointerWorklet` hook** — tracks pointer position over an element and writes it directly to the DOM (`--paint-<name>-x`/`-y`), bypassing React state entirely so mouse movement never triggers a re-render
+- `PaintWorkletConfig.enabled` — skip registration until `true`, for lazy-loading a worklet only when its element becomes visible
+- `PaintWorkletConfig.onError` — callback fired when worklet registration throws
+- `useAnimatedWorklet` now respects `prefers-reduced-motion` by default (`respectReducedMotion` config, default `true`) — freezes on the first frame instead of animating
+- Fixed an ESLint `react-hooks/exhaustive-deps` violation in `usePaintWorklet`'s style memo
+- Added test coverage for `useAnimatedWorklet` and `usePointerWorklet` (previously untested)
 
 ### 0.2.0 — 2026-07-01
 
