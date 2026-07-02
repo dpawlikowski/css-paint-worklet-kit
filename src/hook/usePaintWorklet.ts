@@ -57,6 +57,16 @@ export function usePaintWorklet<N extends WorkletName>(
 
   const enabled = config.enabled ?? true;
 
+  // Callers frequently pass an inline `config` object literal, so its
+  // reference changes every render. We keep a ref pointing at the latest
+  // `config` (synced in its own effect, never read during render) so the
+  // registration effect below can call `onError` with the current
+  // callback without needing `config` itself as a dependency.
+  const configRef = useRef(config);
+  useEffect(() => {
+    configRef.current = config;
+  });
+
   useEffect(() => {
     if (!enabled || registeredRef.current) return;
     registeredRef.current = true;
@@ -68,14 +78,17 @@ export function usePaintWorklet<N extends WorkletName>(
       })
       .catch((err) => {
         console.error(`[css-paint-worklet-kit] Failed to register worklet "${name}":`, err);
-        config.onError?.(err);
+        configRef.current.onError?.(err);
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name, config.workletUrl, enabled]);
 
   const optionsKey = JSON.stringify(options);
   const style = useMemo(
     () => buildStyle(name, (options ?? {}) as Record<string, CSSValue>, config, isReady),
+    // `options` and `config` are deliberately excluded: callers commonly pass
+    // new object/array literals each render, which would defeat this memo.
+    // `optionsKey` (a stable JSON serialization) and `config.paintTarget`
+    // capture everything that actually affects the computed style.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [name, isReady, config.paintTarget, optionsKey]
   );

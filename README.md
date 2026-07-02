@@ -13,7 +13,7 @@ Ready-to-use **CSS Houdini Paint Worklets** with a React hook API — canvas eff
 
 ## What's inside
 
-Five production-ready paint worklets, each accessible via a single React hook call:
+Seven production-ready paint worklets, each accessible via a single React hook call:
 
 | Worklet | Effect |
 |---|---|
@@ -23,6 +23,10 @@ Five production-ready paint worklets, each accessible via a single React hook ca
 | `glitch` | VHS/RGB-slice glitch with scanlines — five style variants |
 | `liquid-blob` | Metaball field with soft radial glow |
 | `spotlight` | Cursor-following radial glow — pairs with `usePointerWorklet` for zero-re-render pointer tracking |
+| `aurora` | Animated mesh-glow bands (aurora borealis) — pairs with `useAnimatedWorklet` |
+| `border-beam` | Glowing beam chasing the element's edge — pairs with `paintTarget: 'border'` |
+
+Any two worklets can also be stacked on one element with `useLayeredWorklets` to build your own "hybrid" effects (see below).
 
 All worklets run inside a `PaintWorkletGlobalScope` — completely off the main thread. The hook handles registration, deduplication, polyfill loading, and SSR safety automatically.
 
@@ -293,6 +297,73 @@ usePaintWorklet('spotlight', {
 });
 ```
 
+### `aurora`
+
+Animated mesh-glow bands drifting across the element, like aurora borealis. Drive `time` from `useAnimatedWorklet` for continuous motion.
+
+```ts
+usePaintWorklet('aurora', {
+  colors?: string[];     // ['#00c9a7', '#845ec2', '#00b4d8']
+  background?: string;   // '#05050c'
+  time?: number;         // 0     — animation clock, feed from useAnimatedWorklet
+  speed?: number;        // 1     — animation speed multiplier
+  scale?: number;        // 1     — horizontal wave frequency
+  opacity?: number;      // 0.55  — band intensity (0–1)
+  blur?: number;         // 24    — horizontal sample resolution (higher = smoother, slower)
+});
+```
+
+### `border-beam`
+
+A glowing beam that chases the element's border. Use with `{ paintTarget: 'border' }` so the effect feeds `border-image` instead of the background.
+
+```ts
+usePaintWorklet('border-beam', {
+  color?: string;       // '#7c3aed'      — beam head color
+  trailColor?: string;  // 'transparent'  — color the trail fades to
+  width?: number;       // 2              — beam stroke width in px
+  time?: number;        // 0              — animation clock, feed from useAnimatedWorklet
+  speed?: number;       // 1              — animation speed multiplier
+  trail?: number;       // 0.25           — trail length, fraction of perimeter (0–1)
+  radius?: number;      // 0              — corner radius in px
+}, { paintTarget: 'border' });
+```
+
+---
+
+## `useLayeredWorklets(layers)`
+
+Stacks multiple paint worklets as CSS background layers on a **single element**, blended with `background-blend-mode` — the primitive for building your own hybrid effects out of the built-ins (e.g. `aurora` for ambient motion under `noise` for grain).
+
+```ts
+function useLayeredWorklets(layers: WorkletLayer[]): {
+  style: React.CSSProperties;
+  isReady: boolean;
+  isSupported: boolean;
+}
+
+interface WorkletLayer<N extends WorkletName = WorkletName> {
+  name: N;
+  options?: WorkletOptions[N];
+  blendMode?: React.CSSProperties['mixBlendMode']; // default: 'normal'
+}
+```
+
+```tsx
+import { useLayeredWorklets } from 'css-paint-worklet-kit';
+
+function HybridHero() {
+  const { style } = useLayeredWorklets([
+    { name: 'aurora', options: { opacity: 0.6, speed: 0.8 } },
+    { name: 'noise', options: { opacity: 0.12 }, blendMode: 'overlay' },
+  ]);
+
+  return <div style={{ ...style, height: '400px' }} />;
+}
+```
+
+Each layer keeps its own `--paint-<name>-*` custom properties (they never collide), so any combination of the built-in worklets — or your own custom ones — can be layered this way.
+
 ---
 
 ## `usePointerWorklet(name, options?, config?)`
@@ -442,6 +513,10 @@ npm run build:demo # build demo for GitHub Pages
 
 ### Unreleased
 
+- **New `aurora` worklet** — animated mesh-glow bands (aurora borealis), pairs with `useAnimatedWorklet`
+- **New `border-beam` worklet** — glowing beam chasing the element's edge, pairs with `paintTarget: 'border'`
+- **New `useLayeredWorklets` hook** — stacks any two (or more) worklets on one element via `background-blend-mode`, the primitive for building custom hybrid effects
+- Demo: Gallery/Playground entrance and hover motion (respects `prefers-reduced-motion`), accessible tabs (`role="tab"`/`aria-selected`), visible focus states, and a footer
 - **New `spotlight` worklet** — cursor-following radial glow
 - **New `usePointerWorklet` hook** — tracks pointer position over an element and writes it directly to the DOM (`--paint-<name>-x`/`-y`), bypassing React state entirely so mouse movement never triggers a re-render
 - `PaintWorkletConfig.enabled` — skip registration until `true`, for lazy-loading a worklet only when its element becomes visible

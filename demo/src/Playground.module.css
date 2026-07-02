@@ -42,6 +42,17 @@
   padding: 0.5rem 0.625rem;
   border-radius: 6px;
   transition: color 0.15s, background 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.sidebarNewDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  flex-shrink: 0;
 }
 
 .sidebarBtn:hover {

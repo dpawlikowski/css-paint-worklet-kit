@@ -1,4 +1,12 @@
-export type WorkletName = 'noise' | 'confetti' | 'gradient' | 'glitch' | 'liquid-blob' | 'spotlight';
+export type WorkletName =
+  | 'noise'
+  | 'confetti'
+  | 'gradient'
+  | 'glitch'
+  | 'liquid-blob'
+  | 'spotlight'
+  | 'aurora'
+  | 'border-beam';
 
 export interface NoiseOptions {
   scale?: number;
@@ -58,6 +66,24 @@ export interface SpotlightOptions {
   softness?: number;
 }
 
+export interface AuroraOptions {
+  colors?: string[];
+  background?: string;
+  speed?: number;
+  scale?: number;
+  opacity?: number;
+  blur?: number;
+}
+
+export interface BorderBeamOptions {
+  color?: string;
+  trailColor?: string;
+  width?: number;
+  speed?: number;
+  trail?: number;
+  radius?: number;
+}
+
 export interface WorkletOptions {
   noise: NoiseOptions;
   confetti: ConfettiOptions;
@@ -65,6 +91,8 @@ export interface WorkletOptions {
   glitch: GlitchOptions;
   'liquid-blob': LiquidBlobOptions;
   spotlight: SpotlightOptions;
+  aurora: AuroraOptions;
+  'border-beam': BorderBeamOptions;
 }
 
 export interface PaintWorkletConfig {

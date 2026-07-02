@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { usePaintWorklet, usePointerWorklet } from 'css-paint-worklet-kit';
+import {
+  usePaintWorklet,
+  usePointerWorklet,
+  useAnimatedWorklet,
+  useLayeredWorklets,
+} from 'css-paint-worklet-kit';
 import styles from './Gallery.module.css';
 
 function CopyButton({ text }: { text: string }) {
@@ -25,6 +30,7 @@ function WorkletCard({
   children,
   isReady,
   isSupported,
+  isNew,
 }: {
   title: string;
   description: string;
@@ -32,6 +38,7 @@ function WorkletCard({
   children: React.ReactNode;
   isReady: boolean;
   isSupported: boolean;
+  isNew?: boolean;
 }) {
   return (
     <div className={styles.card}>
@@ -46,7 +53,10 @@ function WorkletCard({
         )}
       </div>
       <div className={styles.info}>
-        <h3 className={styles.title}>{title}</h3>
+        <h3 className={styles.title}>
+          {title}
+          {isNew && <span className={styles.newBadge}>New</span>}
+        </h3>
         <p className={styles.description}>{description}</p>
         <div className={styles.codeWrapper}>
           <pre className={styles.code}><code>{code}</code></pre>
@@ -243,6 +253,88 @@ function SpotlightCard() {
   );
 }
 
+function AuroraCard() {
+  const { style, isReady, isSupported } = useAnimatedWorklet('aurora', (time) => ({
+    colors: ['#00c9a7', '#845ec2', '#00b4d8'],
+    background: '#05050c',
+    time,
+    speed: 1,
+    scale: 1,
+    opacity: 0.55,
+  }));
+
+  return (
+    <WorkletCard
+      title="aurora"
+      isNew
+      description="Animated mesh-glow bands drifting across the background, like aurora borealis. Runs entirely off the main thread via useAnimatedWorklet."
+      code={`useAnimatedWorklet('aurora', (time) => ({
+  colors: ['#00c9a7', '#845ec2', '#00b4d8'],
+  time,
+  speed: 1,
+  opacity: 0.55,
+}))`}
+      isReady={isReady}
+      isSupported={isSupported}
+    >
+      <div className={styles.previewBox} style={style} />
+    </WorkletCard>
+  );
+}
+
+function BorderBeamCard() {
+  const { style, isReady, isSupported } = useAnimatedWorklet('border-beam', (time) => ({
+    color: '#7c3aed',
+    trailColor: '#00b4d8',
+    width: 2,
+    time,
+    speed: 1,
+    trail: 0.3,
+    radius: 16,
+  }));
+
+  return (
+    <WorkletCard
+      title="border-beam"
+      isNew
+      description="A glowing beam chases the edge of the element — paintTarget: 'border' feeds the effect straight into border-image."
+      code={`useAnimatedWorklet('border-beam', (time) => ({
+  color: '#7c3aed',
+  trailColor: '#00b4d8',
+  time,
+  radius: 16,
+}), { paintTarget: 'border' })`}
+      isReady={isReady}
+      isSupported={isSupported}
+    >
+      <div className={styles.previewBox} style={{ ...style, background: '#0a0a14' }} />
+    </WorkletCard>
+  );
+}
+
+function HybridCard() {
+  const { style, isReady, isSupported } = useLayeredWorklets([
+    { name: 'aurora', options: { colors: ['#ff006e', '#7c3aed', '#00b4d8'], opacity: 0.6, speed: 0.8 } },
+    { name: 'noise', options: { scale: 0.008, color: '#ffffff', opacity: 0.12, pixel: 1 }, blendMode: 'overlay' },
+  ]);
+
+  return (
+    <WorkletCard
+      title="hybrid: aurora + noise"
+      isNew
+      description="useLayeredWorklets stacks any two built-in worklets on one element with background-blend-mode — mix & match your own combos."
+      code={`useLayeredWorklets([
+  { name: 'aurora', options: { opacity: 0.6 } },
+  { name: 'noise', options: { opacity: 0.12 }, blendMode: 'overlay' },
+])`}
+      isReady={isReady}
+      isSupported={isSupported}
+    >
+      <div className={styles.previewBox} style={style} />
+    </WorkletCard>
+  );
+}
+
 export default function Gallery() {
   return (
     <div className={styles.gallery}>
@@ -269,6 +361,9 @@ export default function Gallery() {
         <GlitchCard />
         <LiquidBlobCard />
         <SpotlightCard />
+        <AuroraCard />
+        <BorderBeamCard />
+        <HybridCard />
       </div>
     </div>
   );

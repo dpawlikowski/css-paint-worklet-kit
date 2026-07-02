@@ -19,14 +19,18 @@ export default function App() {
             <span className={styles.logoIcon}>◈</span>
             <span>css-paint-worklet-kit</span>
           </div>
-          <nav className={styles.nav}>
+          <nav className={styles.nav} role="tablist" aria-label="Demo sections">
             <button
+              role="tab"
+              aria-selected={tab === 'gallery'}
               className={`${styles.tab} ${tab === 'gallery' ? styles.active : ''}`}
               onClick={() => setTab('gallery')}
             >
               Gallery
             </button>
             <button
+              role="tab"
+              aria-selected={tab === 'playground'}
               className={`${styles.tab} ${tab === 'playground' ? styles.active : ''}`}
               onClick={() => setTab('playground')}
             >
@@ -46,9 +50,16 @@ export default function App() {
         </div>
       </header>
 
-      <main className={styles.main}>
+      <main className={styles.main} role="tabpanel">
         {tab === 'gallery' ? <Gallery /> : <Playground />}
       </main>
+
+      <footer className={styles.footer}>
+        <span>
+          MIT © <a href="https://github.com/dpawlikowski" target="_blank" rel="noreferrer">Dominik Pawlikowski</a>
+        </span>
+        <a href={GITHUB_URL} target="_blank" rel="noreferrer">Source</a>
+      </footer>
     </div>
   );
 }

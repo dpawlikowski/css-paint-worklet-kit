@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { usePaintWorklet, usePointerWorklet } from 'css-paint-worklet-kit';
+import { usePaintWorklet, usePointerWorklet, useAnimatedWorklet } from 'css-paint-worklet-kit';
 import type { WorkletName } from 'css-paint-worklet-kit';
 import styles from './Playground.module.css';
 
@@ -318,15 +318,95 @@ function SpotlightPanel() {
   );
 }
 
+function AuroraPanel() {
+  const [opts, setOpts] = useState({
+    colors: ['#00c9a7', '#845ec2', '#00b4d8'],
+    background: '#05050c',
+    speed: 1,
+    scale: 1,
+    opacity: 0.55,
+  });
+  const { style, isReady } = useAnimatedWorklet('aurora', (time) => ({ ...opts, time }));
+  const set = <K extends keyof typeof opts>(k: K, v: (typeof opts)[K]) =>
+    setOpts((p) => ({ ...p, [k]: v }));
+
+  return (
+    <div className={styles.panel}>
+      <div className={styles.preview} style={style}>
+        {!isReady && <span className={styles.loadingHint}>Registering worklet…</span>}
+      </div>
+      <div className={styles.controls}>
+        <Slider label="speed" value={opts.speed} min={0} max={3} step={0.1} onChange={(v) => set('speed', v)} />
+        <Slider label="scale" value={opts.scale} min={0.3} max={3} step={0.1} onChange={(v) => set('scale', v)} />
+        <Slider label="opacity" value={opts.opacity} min={0} max={1} step={0.01} onChange={(v) => set('opacity', v)} />
+        <ColorPicker label="background" value={opts.background} onChange={(v) => set('background', v)} />
+        <div className={styles.colorGroup}>
+          <span className={styles.label}>colors ({opts.colors.length})</span>
+          <div className={styles.colorPickers}>
+            {opts.colors.map((c, i) => (
+              <input
+                key={i}
+                type="color"
+                value={c}
+                onChange={(e) => {
+                  const next = [...opts.colors];
+                  next[i] = e.target.value;
+                  setOpts((p) => ({ ...p, colors: next }));
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BorderBeamPanel() {
+  const [opts, setOpts] = useState({
+    color: '#7c3aed',
+    trailColor: '#00b4d8',
+    width: 2,
+    speed: 1,
+    trail: 0.3,
+    radius: 16,
+  });
+  const { style, isReady } = useAnimatedWorklet(
+    'border-beam',
+    (time) => ({ ...opts, time }),
+    { paintTarget: 'border' }
+  );
+  const set = <K extends keyof typeof opts>(k: K, v: (typeof opts)[K]) =>
+    setOpts((p) => ({ ...p, [k]: v }));
+
+  return (
+    <div className={styles.panel}>
+      <div className={styles.preview} style={{ ...style, background: '#0a0a14' }}>
+        {!isReady && <span className={styles.loadingHint}>Registering worklet…</span>}
+      </div>
+      <div className={styles.controls}>
+        <Slider label="width" value={opts.width} min={1} max={8} step={0.5} onChange={(v) => set('width', v)} />
+        <Slider label="speed" value={opts.speed} min={0} max={3} step={0.1} onChange={(v) => set('speed', v)} />
+        <Slider label="trail" value={opts.trail} min={0.05} max={0.9} step={0.01} onChange={(v) => set('trail', v)} />
+        <Slider label="radius" value={opts.radius} min={0} max={60} step={1} onChange={(v) => set('radius', v)} />
+        <ColorPicker label="color" value={opts.color} onChange={(v) => set('color', v)} />
+        <ColorPicker label="trail color" value={opts.trailColor} onChange={(v) => set('trailColor', v)} />
+      </div>
+    </div>
+  );
+}
+
 // ─── Main ───────────────────────────────────────────────────────────────────
 
-const WORKLETS: { name: WorkletName; label: string }[] = [
+const WORKLETS: { name: WorkletName; label: string; isNew?: boolean }[] = [
   { name: 'noise', label: 'noise' },
   { name: 'confetti', label: 'confetti' },
   { name: 'gradient', label: 'gradient' },
   { name: 'glitch', label: 'glitch' },
   { name: 'liquid-blob', label: 'liquid-blob' },
   { name: 'spotlight', label: 'spotlight ✨' },
+  { name: 'aurora', label: 'aurora', isNew: true },
+  { name: 'border-beam', label: 'border-beam', isNew: true },
 ];
 
 const PANELS: Record<WorkletName, React.ComponentType> = {
@@ -336,6 +416,8 @@ const PANELS: Record<WorkletName, React.ComponentType> = {
   glitch: GlitchPanel,
   'liquid-blob': LiquidBlobPanel,
   spotlight: SpotlightPanel,
+  aurora: AuroraPanel,
+  'border-beam': BorderBeamPanel,
 };
 
 export default function Playground() {
@@ -344,15 +426,18 @@ export default function Playground() {
 
   return (
     <div className={styles.playground}>
-      <div className={styles.sidebar}>
+      <div className={styles.sidebar} role="tablist" aria-label="Worklet selector">
         <p className={styles.sidebarTitle}>Worklet</p>
-        {WORKLETS.map(({ name, label }) => (
+        {WORKLETS.map(({ name, label, isNew }) => (
           <button
             key={name}
+            role="tab"
+            aria-selected={active === name}
             className={`${styles.sidebarBtn} ${active === name ? styles.sidebarActive : ''}`}
             onClick={() => setActive(name)}
           >
             {label}
+            {isNew && <span className={styles.sidebarNewDot} aria-label="New" title="New" />}
           </button>
         ))}
       </div>

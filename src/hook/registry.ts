@@ -4,6 +4,8 @@ import gradientCode from '../worklets/gradient';
 import glitchCode from '../worklets/glitch';
 import liquidBlobCode from '../worklets/liquid-blob';
 import spotlightCode from '../worklets/spotlight';
+import auroraCode from '../worklets/aurora';
+import borderBeamCode from '../worklets/border-beam';
 import { ensureWorkletSupport } from '../polyfill';
 import type { WorkletName } from './types';
 
@@ -14,6 +16,8 @@ const workletSources: Record<WorkletName, string> = {
   glitch: glitchCode,
   'liquid-blob': liquidBlobCode,
   spotlight: spotlightCode,
+  aurora: auroraCode,
+  'border-beam': borderBeamCode,
 };
 
 const registered = new Map<string, Promise<boolean>>();
