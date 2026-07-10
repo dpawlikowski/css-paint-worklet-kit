@@ -194,10 +194,10 @@ function GlitchCard() {
 function LiquidBlobCard() {
   const { style, isReady, isSupported } = usePaintWorklet('liquid-blob', {
     color: '#7c3aed',
-    count: 7,
-    radius: 0.4,
+    count: 5,
+    radius: 0.16,
     seed: 99,
-    threshold: 1.1,
+    threshold: 1,
     background: '#0a0a14',
     glow: 0.6,
     pixel: 3,
@@ -209,9 +209,9 @@ function LiquidBlobCard() {
       description="Metaball field rendered as background with soft radial glow. threshold controls blob merging, glow adds ambient light."
       code={`usePaintWorklet('liquid-blob', {
   color: '#7c3aed',
-  count: 7,
-  radius: 0.4,
-  threshold: 1.1,
+  count: 5,
+  radius: 0.16,
+  threshold: 1,
   glow: 0.6,   // soft ambient glow 0–1
   pixel: 3,    // pixel block size
 })`}
@@ -297,17 +297,20 @@ function BorderBeamCard() {
     <WorkletCard
       title="border-beam"
       isNew
-      description="A glowing beam chases the edge of the element — paintTarget: 'border' feeds the effect straight into border-image."
+      description="A glowing beam chases the edge of the element — the worklet strokes a rounded-rect ring on a transparent background, so match the box radius."
       code={`useAnimatedWorklet('border-beam', (time) => ({
   color: '#7c3aed',
   trailColor: '#00b4d8',
   time,
   radius: 16,
-}), { paintTarget: 'border' })`}
+}))`}
       isReady={isReady}
       isSupported={isSupported}
     >
-      <div className={styles.previewBox} style={{ ...style, background: '#0a0a14' }} />
+      <div
+        className={styles.previewBox}
+        style={{ ...style, backgroundColor: '#0a0a14', borderRadius: 16 }}
+      />
     </WorkletCard>
   );
 }

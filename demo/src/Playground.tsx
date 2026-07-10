@@ -254,10 +254,10 @@ function GlitchPanel() {
 function LiquidBlobPanel() {
   const [opts, setOpts] = useState({
     color: '#7c3aed',
-    count: 7,
-    radius: 0.4,
+    count: 5,
+    radius: 0.16,
     seed: 99,
-    threshold: 1.1,
+    threshold: 1,
     background: '#0a0a14',
     glow: 0.6,
     pixel: 3,
@@ -272,9 +272,9 @@ function LiquidBlobPanel() {
         {!isReady && <span className={styles.loadingHint}>Registering worklet…</span>}
       </div>
       <div className={styles.controls}>
-        <Slider label="count" value={opts.count} min={2} max={15} step={1} onChange={(v) => set('count', v)} />
-        <Slider label="radius" value={opts.radius} min={0.1} max={0.8} step={0.01} onChange={(v) => set('radius', v)} />
-        <Slider label="threshold" value={opts.threshold} min={0.5} max={2.5} step={0.05} onChange={(v) => set('threshold', v)} />
+        <Slider label="count" value={opts.count} min={2} max={12} step={1} onChange={(v) => set('count', v)} />
+        <Slider label="radius" value={opts.radius} min={0.05} max={0.35} step={0.01} onChange={(v) => set('radius', v)} />
+        <Slider label="threshold" value={opts.threshold} min={0.6} max={1.8} step={0.05} onChange={(v) => set('threshold', v)} />
         <Slider label="glow" value={opts.glow} min={0} max={1} step={0.05} onChange={(v) => set('glow', v)} />
         <Slider label="pixel size" value={opts.pixel} min={1} max={8} step={1} onChange={(v) => set('pixel', v)} />
         <Slider label="seed" value={opts.seed} min={1} max={200} step={1} onChange={(v) => set('seed', v)} />
@@ -374,14 +374,16 @@ function BorderBeamPanel() {
   const { style, isReady } = useAnimatedWorklet(
     'border-beam',
     (time) => ({ ...opts, time }),
-    { paintTarget: 'border' }
   );
   const set = <K extends keyof typeof opts>(k: K, v: (typeof opts)[K]) =>
     setOpts((p) => ({ ...p, [k]: v }));
 
   return (
     <div className={styles.panel}>
-      <div className={styles.preview} style={{ ...style, background: '#0a0a14' }}>
+      <div
+        className={styles.preview}
+        style={{ ...style, backgroundColor: '#0a0a14', borderRadius: `${opts.radius}px` }}
+      >
         {!isReady && <span className={styles.loadingHint}>Registering worklet…</span>}
       </div>
       <div className={styles.controls}>
