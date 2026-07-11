@@ -73,6 +73,8 @@ export interface AuroraOptions {
   scale?: number;
   opacity?: number;
   blur?: number;
+  /** Animation time, typically driven by `useAnimatedWorklet`. Read by the worklet as `--paint-aurora-time`. */
+  time?: number;
 }
 
 export interface BorderBeamOptions {
@@ -82,6 +84,8 @@ export interface BorderBeamOptions {
   speed?: number;
   trail?: number;
   radius?: number;
+  /** Animation time, typically driven by `useAnimatedWorklet`. Read by the worklet as `--paint-border-beam-time`. */
+  time?: number;
 }
 
 export interface WorkletOptions {

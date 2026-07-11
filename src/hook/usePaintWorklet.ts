@@ -7,7 +7,8 @@ import type {
   UsePaintWorkletResult,
 } from './types';
 
-type CSSValue = string | number | undefined;
+// Array values (e.g. `colors`) are joined into a comma-separated custom property.
+type CSSValue = string | number | string[] | undefined;
 
 function toKebabCase(key: string): string {
   return key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
@@ -53,7 +54,9 @@ export function usePaintWorklet<N extends WorkletName>(
 ): UsePaintWorkletResult {
   const [isReady, setIsReady] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
-  const registeredRef = useRef(false);
+  // The (name, workletUrl) pair we last registered for. A plain boolean would
+  // freeze on the first worklet and ignore later name/url changes.
+  const registeredKeyRef = useRef<string | null>(null);
 
   const enabled = config.enabled ?? true;
 
@@ -68,11 +71,21 @@ export function usePaintWorklet<N extends WorkletName>(
   });
 
   useEffect(() => {
-    if (!enabled || registeredRef.current) return;
-    registeredRef.current = true;
+    if (!enabled) return;
+
+    const key = `${name}|${config.workletUrl ?? ''}`;
+    if (registeredKeyRef.current === key) return;
+    registeredKeyRef.current = key;
+
+    // Reset readiness while (re)registering a different worklet so stale state
+    // from the previous worklet isn't reported for the new one.
+    setIsReady(false);
+    setIsSupported(false);
 
     registerWorklet(name, config.workletUrl)
       .then((supported) => {
+        // A newer registration may have superseded this one mid-flight.
+        if (registeredKeyRef.current !== key) return;
         setIsSupported(supported);
         if (supported) setIsReady(true);
       })

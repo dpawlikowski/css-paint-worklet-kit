@@ -20,7 +20,10 @@ const workletSources: Record<WorkletName, string> = {
   'border-beam': borderBeamCode,
 };
 
+/** In-flight or resolved registration attempts, keyed by worklet name or custom URL. */
 const registered = new Map<string, Promise<boolean>>();
+/** Keys whose registration has actually succeeded — the source of truth for {@link isWorkletRegistered}. */
+const succeeded = new Set<string>();
 
 type PaintWorkletAPI = { addModule: (url: string) => Promise<void> };
 
@@ -32,7 +35,8 @@ export async function registerWorklet(name: WorkletName, customUrl?: string): Pr
   if (typeof window === 'undefined') return false;
 
   const key = customUrl ?? name;
-  if (registered.has(key)) return registered.get(key)!;
+  const existing = registered.get(key);
+  if (existing) return existing;
 
   const task = (async (): Promise<boolean> => {
     await ensureWorkletSupport();
@@ -43,18 +47,38 @@ export async function registerWorklet(name: WorkletName, customUrl?: string): Pr
       return false;
     }
 
-    const url = customUrl ?? URL.createObjectURL(
-      new Blob([workletSources[name]], { type: 'application/javascript' })
-    );
+    // Only object URLs we created need revoking; a caller-supplied customUrl is theirs to own.
+    let objectUrl: string | undefined;
+    const url =
+      customUrl ??
+      (objectUrl = URL.createObjectURL(
+        new Blob([workletSources[name]], { type: 'application/javascript' }),
+      ));
 
-    await paintWorklet.addModule(url);
-    return true;
+    try {
+      await paintWorklet.addModule(url);
+      succeeded.add(key);
+      return true;
+    } finally {
+      // The worklet code is loaded once addModule settles, so the blob URL can be freed.
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    }
   })();
 
   registered.set(key, task);
+  // Evict a failed/false attempt so a later call can retry rather than being stuck
+  // on a permanently-rejected cached promise (e.g. a transient CSP/network error).
+  task.then(
+    (ok) => {
+      if (!ok) registered.delete(key);
+    },
+    () => {
+      registered.delete(key);
+    },
+  );
   return task;
 }
 
 export function isWorkletRegistered(name: WorkletName): boolean {
-  return registered.has(name);
+  return succeeded.has(name);
 }

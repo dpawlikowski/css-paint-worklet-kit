@@ -9,6 +9,7 @@ beforeEach(() => {
   (globalThis as Record<string, unknown>).CSS = {};
   (globalThis as Record<string, unknown>).URL = {
     createObjectURL: vi.fn().mockReturnValue('blob:fake'),
+    revokeObjectURL: vi.fn(),
   };
 });
 
@@ -74,6 +75,39 @@ describe('registerWorklet – advanced', () => {
     await registerWorklet('glitch');
 
     expect(isWorkletRegistered('glitch')).toBe(true);
+  });
+
+  it('revokes the object URL it created once addModule settles', async () => {
+    const addModule = vi.fn().mockResolvedValue(undefined);
+    const revokeObjectURL = vi.fn();
+    (globalThis as Record<string, unknown>).CSS = { paintWorklet: { addModule } };
+    (globalThis as Record<string, unknown>).URL = {
+      createObjectURL: vi.fn().mockReturnValue('blob:fake'),
+      revokeObjectURL,
+    };
+
+    const { registerWorklet } = await import('../hook/registry');
+    await registerWorklet('noise');
+
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:fake');
+  });
+
+  it('does not cache a rejected registration, so a later call can retry', async () => {
+    const addModule = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('transient CSP failure'))
+      .mockResolvedValueOnce(undefined);
+    (globalThis as Record<string, unknown>).CSS = { paintWorklet: { addModule } };
+
+    const { registerWorklet, isWorkletRegistered } = await import('../hook/registry');
+
+    await expect(registerWorklet('noise')).rejects.toThrow('transient CSP failure');
+    expect(isWorkletRegistered('noise')).toBe(false);
+
+    // The failed attempt must not be cached as a permanently-rejected promise.
+    await expect(registerWorklet('noise')).resolves.toBe(true);
+    expect(isWorkletRegistered('noise')).toBe(true);
+    expect(addModule).toHaveBeenCalledTimes(2);
   });
 
   it('deduplicates custom URL registrations by URL key', async () => {

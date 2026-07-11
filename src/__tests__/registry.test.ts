@@ -25,6 +25,7 @@ describe('registerWorklet', () => {
     (globalThis as unknown as Record<string, unknown>).CSS = { paintWorklet: { addModule } };
     (globalThis as unknown as Record<string, unknown>).URL = {
       createObjectURL: vi.fn().mockReturnValue('blob:fake'),
+      revokeObjectURL: vi.fn(),
     };
 
     const { registerWorklet } = await import('../hook/registry');
